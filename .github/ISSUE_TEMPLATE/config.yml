@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Developer documentation
+    url: https://docs.meetily.ai/developers
+    about: The source of truth for the Agent API, CLI, MCP, and webhooks.
+  - name: Contributing guide
+    url: https://github.com/Zackriya-Solutions/meetily-workflows/blob/main/CONTRIBUTING.md
+    about: How to add a community workflow (manifest → catalog) or improve an example.

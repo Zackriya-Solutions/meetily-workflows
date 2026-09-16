@@ -1,0 +1,32 @@
+name: Report a problem with a listed workflow
+description: A workflow in the catalog has a dead link, broken code, or is otherwise not working.
+title: "[Broken] <workflow id>"
+labels: ["catalog-issue"]
+body:
+  - type: input
+    id: workflow_id
+    attributes:
+      label: Workflow id
+      description: The catalog id (the folder name under community-workflows/).
+      placeholder: summary-file-backup
+    validations:
+      required: true
+  - type: dropdown
+    id: problem
+    attributes:
+      label: What is wrong
+      options:
+        - Dead or moved source_url / entry
+        - Code errors when run
+        - Uses something that no longer ships (removed API/CLI/MCP surface)
+        - Manifest metadata is inaccurate
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: What you observed, and how to reproduce it if you can.
+    validations:
+      required: true

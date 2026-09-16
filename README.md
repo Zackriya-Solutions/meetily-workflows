@@ -202,6 +202,27 @@ subscribable.) A content-preserving summary-regeneration failure rides
 Full: https://docs.meetily.ai/developers/webhooks-and-sse and
 https://docs.meetily.ai/developers/events
 
+## Community workflows
+
+Automations built by the community, cataloged here. Each entry is a **manifest**
+(metadata) pointing at the contributor's own repo -- **the code is not hosted
+here**. Workflows run standalone against the shipping API/CLI/MCP/webhooks; they
+do not integrate with the app in this version.
+
+<!-- BEGIN CATALOG -->
+| Workflow | Trigger | Language | Scopes | Author |
+| --- | --- | --- | --- | --- |
+| [Summary file backup](https://github.com/Zackriya-Solutions/meetily-workflows) | `summary-ready` | python | read | Meetily (github.com/Zackriya-Solutions) |
+
+_1 community workflow(s). Generated from `community-workflows/*/manifest.yaml` by `scripts/generate_catalog.py` -- do not edit this table by hand._
+<!-- END CATALOG -->
+
+Full index and how it works: [`community-workflows/`](community-workflows/README.md).
+To add yours (any language -- Python, TypeScript, ...), see
+[CONTRIBUTING](CONTRIBUTING.md). The table above is generated from
+`community-workflows/*/manifest.yaml` by `scripts/generate_catalog.py`; don't
+edit it by hand.
+
 ## Prerequisites (recap)
 
 1. Meetily Pro, with **Settings > Integrations** enabled (see [Setup](#setup-turn-it-on)).

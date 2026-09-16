@@ -1,0 +1,89 @@
+name: Submit a community workflow
+description: Propose a workflow you built for the Meetily Agent API to be listed in the catalog.
+title: "[Workflow] <your workflow name>"
+labels: ["community-workflow"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for building on Meetily! This issue is the **first step** — it lets a
+        maintainer sanity-check your workflow before you open a PR that adds the
+        manifest. Your **code stays in your own repo**; the catalog only stores a
+        manifest that points to it.
+
+        See [CONTRIBUTING.md](https://github.com/Zackriya-Solutions/meetily-workflows/blob/main/CONTRIBUTING.md)
+        for the full flow.
+  - type: input
+    id: name
+    attributes:
+      label: Workflow name
+      placeholder: Summary to Slack
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What it does
+      description: One or two sentences.
+    validations:
+      required: true
+  - type: input
+    id: source_url
+    attributes:
+      label: Source repository (where the code lives)
+      placeholder: https://github.com/you/your-repo
+    validations:
+      required: true
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      options:
+        - python
+        - typescript
+        - bash
+        - other
+    validations:
+      required: true
+  - type: dropdown
+    id: trigger
+    attributes:
+      label: Trigger
+      description: "transcript-ready is not accepted yet (dormant, no producer in this release)."
+      options:
+        - recording-ends
+        - summary-ready
+        - import-finishes
+        - manual
+        - scheduled
+    validations:
+      required: true
+  - type: checkboxes
+    id: scopes
+    attributes:
+      label: Scopes the workflow needs
+      description: read is implied for all; check what it actually uses.
+      options:
+        - label: read
+        - label: record
+        - label: write
+        - label: delete
+  - type: checkboxes
+    id: conformance
+    attributes:
+      label: Conformance
+      description: These are required to be listed.
+      options:
+        - label: Uses only the shipping Agent API / CLI / MCP / webhooks (nothing unshipped, no app integration).
+          required: true
+        - label: Idempotent, handles a `pending` destination, and (for event workflows) verifies the HMAC and dedups on `event_id`.
+          required: true
+        - label: Runs standalone and has been tested against a real Meetily instance.
+          required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: How to run it, what it connects to, etc.
+    validations:
+      required: false

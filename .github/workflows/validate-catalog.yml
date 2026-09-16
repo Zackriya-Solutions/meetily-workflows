@@ -1,0 +1,36 @@
+name: Validate catalog
+
+# Manual only: a maintainer runs this from the Actions tab before merging a
+# catalog PR. It is intentionally NOT triggered on push or pull_request.
+# Contributors can run the same check locally:
+#   pip install pyyaml jsonschema && python scripts/generate_catalog.py --check
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag, or SHA to check (e.g. a PR branch)"
+        required: false
+        default: ""
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install pyyaml jsonschema
+
+      # Validates every manifest against the schema, checks id == folder name,
+      # and fails if the generated catalog tables are stale. Never runs
+      # contributor workflow code.
+      - name: Validate manifests and catalog freshness
+        run: python scripts/generate_catalog.py --check

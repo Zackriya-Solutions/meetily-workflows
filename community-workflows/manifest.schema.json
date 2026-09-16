@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/Zackriya-Solutions/meetily-workflows/community-workflows/manifest.schema.json",
+  "title": "Meetily community workflow catalog manifest",
+  "description": "Metadata for one community-built automation. A forward-compatible subset of the future wf/ execution manifest. Does not host or run code; it catalogs a workflow that runs standalone against the shipping Meetily Agent API.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["manifest_version", "id", "name", "description", "author", "language", "trigger", "scopes", "source_url", "entry", "run"],
+  "properties": {
+    "manifest_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Catalog schema version."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "maxLength": 64,
+      "description": "Unique slug; must equal the containing folder name."
+    },
+    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "description": { "type": "string", "minLength": 1, "maxLength": 280 },
+    "author": { "type": "string", "minLength": 1, "maxLength": 120, "description": "Name and/or handle, e.g. 'jane (github.com/jane)'." },
+    "language": {
+      "type": "string",
+      "enum": ["python", "typescript", "bash", "other"]
+    },
+    "trigger": {
+      "type": "string",
+      "enum": ["recording-ends", "summary-ready", "import-finishes", "manual", "scheduled"],
+      "description": "A live frozen trigger id, or manual/scheduled for non-event automations. transcript-ready is intentionally not accepted (dormant, no producer yet)."
+    },
+    "scopes": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["read", "record", "write", "delete"] },
+      "uniqueItems": true,
+      "description": "Scopes the workflow's key needs. read is implied for all; list what it actually uses."
+    },
+    "source_url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://",
+      "description": "Where the workflow's code lives (the contributor's own repo). Code is never hosted in this repo."
+    },
+    "ref": { "type": "string", "maxLength": 120, "description": "Optional tag or commit to pin for reproducibility." },
+    "entry": { "type": "string", "minLength": 1, "maxLength": 200, "description": "Path to the entry file within source_url." },
+    "run": { "type": "string", "minLength": 1, "maxLength": 300, "description": "How to run it standalone, e.g. 'python run.py'." },
+    "meetily_min_version": { "type": "string", "maxLength": 20 },
+    "tags": { "type": "array", "items": { "type": "string", "maxLength": 30 }, "maxItems": 8, "uniqueItems": true },
+    "homepage": { "type": "string", "format": "uri", "pattern": "^https?://" },
+    "license": { "type": "string", "maxLength": 40 }
+  }
+}
