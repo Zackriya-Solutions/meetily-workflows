@@ -35,11 +35,11 @@ def print_brief(client: MeetilyClient, event: dict) -> None:
     title = meeting.get("title") or "(untitled meeting)"
 
     try:
-        # NOTE: the transcript/meeting response shapes are not pinned in the
-        # OpenAPI manifest, so the "title"/"text" field names here are best-guess.
-        # Verify against GET /openapi.json (or the live response) for your build.
+        # Transcript shape (verified live): {meeting_id, title, segments: [{text, timestamp,
+        # audio_start_time, audio_end_time, duration}, ...]}. Join the segment texts.
         transcript = client.get(f"/v1/meetings/{meeting_id}/transcript")
-        text = transcript.get("text", "") if isinstance(transcript, dict) else ""
+        segments = transcript.get("segments", []) if isinstance(transcript, dict) else []
+        text = " ".join(s.get("text", "") for s in segments).strip()
         preview = text[:280] + ("..." if len(text) > 280 else "")
     except Exception as exc:  # transcript may not be ready yet, or fetch failed
         preview = f"(could not fetch transcript: {exc})"
