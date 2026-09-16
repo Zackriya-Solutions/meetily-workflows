@@ -11,6 +11,10 @@ connectors, a manifest schema, an execution engine) is a separate, next-release
 product. This repo does not scaffold any of that -- see
 [Open question](#open-question-whats-next).
 
+> **Availability:** the Meetily Agent API (and the automations you build on it)
+> is a **Meetily Pro** feature today. Support for the **Community (open-source)
+> edition** is coming soon.
+
 > Full developer documentation: **https://docs.meetily.ai/developers**. The
 > tables below are a quick reference; the docs site and `GET /openapi.json` are
 > the source of truth.
