@@ -27,8 +27,9 @@ assistant afterwards so it picks up the new server.
 That token starts **read-only**. If you want the assistant to start/stop
 recording or to write (rename meetings, save or regenerate summaries,
 control jobs), turn on **Record (start/stop mic)** and/or **Write** for that assistant in the
-app -- there is no command-line flag for it. Delete is never available
-through MCP. A tool call the token isn't scoped for fails with
+app -- there is no command-line flag for it. The same screen also offers a
+**Delete** toggle, but no MCP tool deletes anything, so leave it off. A tool
+call the token isn't scoped for fails with
 `insufficient_scope`.
 
 If you'd rather write the client config entry by hand, this is the shape

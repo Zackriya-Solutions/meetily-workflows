@@ -43,12 +43,13 @@ assistant and key, but recording/transcription/summary keep running.
 ![Automation API master switch at the top of the Integrations tab](docs/images/enable-automation-api.png)
 
 **2. Allow the CLI.** A highlighted strip titled **"Allow the CLI on this
-computer"**, always visible above **Apps & scripts**, covers Meetily's own
+computer"**, pinned at the top of **Apps & scripts** (visible even while
+the key list is collapsed), covers Meetily's own
 auto-created **`loopback`** key (Read-only). Turn on its **Allow** switch so
 the `meetily-pro` CLI on this computer can connect. (This key can't be revoked
 from the UI.)
 
-![The "Allow the CLI on this computer" strip above Apps & scripts](docs/images/allow-cli.png)
+![The "Allow the CLI on this computer" strip at the top of Apps & scripts](docs/images/allow-cli.png)
 
 **3. Create a scoped key** (for a script/app). Click **+ Create key**, choose
 permissions (Read is always on; add Record/Write/Delete as needed), and set
@@ -128,7 +129,7 @@ Steps for a record/write/delete key:
 How the CLI and `meetily_agent` pick a token is under
 [Token resolution order](#token-resolution-order). MCP assistants are
 different: **Connect** mints each assistant its own token, and you opt in to
-Record/Write for it in the app.
+Record/Write/Delete for it in the app.
 
 ## The frozen trigger catalogue
 
@@ -222,7 +223,7 @@ touches the DB); inherits the Pro gate and per-route scopes.
 |---|---|
 | Tools | 33 total (20 read / 9 write / 4 record, incl. 2 bounded-wait); 28 advertised by default (5 webhook tools gated behind `--allow-webhooks`) |
 | Read-only | `meetily-pro mcp --read-only` hides and refuses write tools |
-| Delete | Never exposed as a tool, in any mode |
+| Delete | No tool deletes anything, in any mode (the app can still grant an assistant's token the Delete scope; no tool uses it) |
 | Install | `meetily-pro mcp install [--config PATH] [--name NAME]` prints a handoff -- the `mcpServers` entry plus the app screen name (Settings > Apps & scripts). It mints no token and writes no client config; the app does both when you click **Connect**. `--record`/`--write` on `install` are accepted but do nothing |
 | Doctor | `meetily-pro mcp doctor` checks gateway reachability, Pro license tier, and token scopes |
 | Resources | `meetily://meetings`, `meetily://meeting/{id}`, `meetily://transcript/{id}`, `meetily://summary/{id}` |
@@ -252,7 +253,8 @@ total); canonical machine-readable reference: `GET /openapi.json`.
 | `GET /v1/recording/wait?until=started\|stopped&timeout=<s>` (SSE) | read | Wait for recording to start or stop; `until` is required (default timeout 30 s / 3600 s) |
 | `GET /v1/meetings/{id}/summary/operations/{operation_id}/wait?timeout_ms=<ms>` (SSE) | read | Wait for a summary regeneration to finish |
 
-Each SSE wait sends one terminal event (or a `timeout` event) and closes; every timeout is capped at 3600 s.
+Each SSE wait sends one terminal event (or a `timeout` event) and closes. Job and recording waits are capped at 3600 s; the summary-operation
+wait takes `timeout_ms` and is capped at 60 s (default 30 s).
 If the state is already reached when you call it, the wait returns at once:
 `until=stopped` while nothing is recording answers immediately with a
 `recording.stopped` whose `resource.id` is `null`. To wait for the end of a
