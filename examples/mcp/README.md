@@ -12,25 +12,34 @@ meetily-pro mcp install
 
 This does not install anything by itself -- it is a handoff. Meetily is the
 single owner of assistant registration, so `install` only prints the
-`mcpServers` entry the app will write plus the name of the screen where you
-actually connect an assistant: **Settings > Integrations > AI assistants
-(MCP)**. It never mints a token or touches your client config, and its
-`--record` / `--write` flags are accepted but do nothing.
+`mcpServers` entry the app will write plus a pointer to the app screen. It
+never mints a token or touches your client config, and its `--record` /
+`--write` flags are accepted but do nothing.
 
-Open that screen and press **Connect** next to your assistant. The app
-mints a scoped, per-client token and writes the `mcpServers` entry for you.
-The token starts read-only -- Record, Write, and Delete are each a separate
-opt-in you make in the app, not on the command line. Restart the assistant
-afterwards so it picks up the new server.
+## Token: Connect mints it for you
+
+The MCP server needs a token like every other client, but you don't create
+it by hand. In **Settings > Integrations > AI assistants (MCP)**, press
+**Connect** next to your assistant. The app mints a scoped token just for
+that assistant and writes the `mcpServers` entry for you. Restart the
+assistant afterwards so it picks up the new server.
+
+That token starts **read-only**. If you want the assistant to start/stop
+recording or to write (rename meetings, save or regenerate summaries,
+control jobs), turn on **Record (start/stop mic)** and/or **Write** for that assistant in the
+app -- there is no command-line flag for it. Delete is never available
+through MCP. A tool call the token isn't scoped for fails with
+`insufficient_scope`.
 
 If you'd rather write the client config entry by hand, this is the shape
-the app writes:
+the app writes (macOS path shown). The token file is the one the app minted for that
+assistant, so it's simplest to let **Connect** write it:
 
 ```json
 {
   "mcpServers": {
     "meetily": {
-      "command": "<path to the meetily-pro binary>",
+      "command": "/Applications/Meetily Pro.app/Contents/MacOS/meetily-pro",
       "args": ["mcp", "--server", "http://127.0.0.1:8420", "--token-file", "<path the app gives you>"]
     }
   }
