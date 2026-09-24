@@ -58,7 +58,7 @@ if [ "$HTTP_STATUS" -ge 400 ]; then
       echo "Error: bad_request (400) -- if the message says 'url host is not allowed (loopback/private)', add this receiver's host:port under Settings > Integrations > Advanced > Local targets, then re-run." >&2
       ;;
     webhooks_disabled)
-      echo "Error: webhooks_disabled (409) -- the Webhook delivery door is off. Turn it on under Settings > Integrations > Advanced." >&2
+      echo "Error: webhooks_disabled (409) -- webhook delivery is off. Turn on 'Outgoing (webhooks)' under Settings > Integrations > Advanced." >&2
       ;;
     *)
       echo "Error: $ERROR_CODE (HTTP $HTTP_STATUS)" >&2

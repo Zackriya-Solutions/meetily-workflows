@@ -19,10 +19,18 @@ never mints a token or touches your client config, and its `--record` /
 ## Token: Connect mints it for you
 
 The MCP server needs a token like every other client, but you don't create
-it by hand. In **Settings > Integrations > AI assistants (MCP)**, press
-**Connect** next to your assistant. The app mints a scoped token just for
-that assistant and writes the `mcpServers` entry for you. Restart the
-assistant afterwards so it picks up the new server.
+it by hand:
+
+1. In **Settings > Integrations > AI assistants (MCP)**, press **Connect**
+   next to your assistant.
+2. Choose what it may do, then press **Connect** in that panel. The app mints
+   a scoped token just for that assistant and writes the `mcpServers` entry
+   for you.
+3. Turn on the assistant's **Allow** switch. Every new connection starts off
+   ("Not allowed yet"), and an off connection is refused.
+4. Restart the assistant so it picks up the new server.
+
+![Choosing what the assistant may do](../../docs/images/mcp-grant.png)
 
 That token starts **read-only**. If you want the assistant to start/stop
 recording or to write (rename meetings, save or regenerate summaries,

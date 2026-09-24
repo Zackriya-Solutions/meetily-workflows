@@ -40,6 +40,8 @@ master switch at the top of **Settings > Integrations** -- it takes effect
 immediately, no restart. Turning it off later closes the ports and stops every
 assistant and key, but recording/transcription/summary keep running.
 
+![First run: the Integrations card on Settings > PRO, with Turn on](docs/images/pro-card-turn-on.png)
+
 ![Automation API master switch at the top of the Integrations tab](docs/images/enable-automation-api.png)
 
 **2. Allow the CLI.** A highlighted strip titled **"Allow the CLI on this
@@ -62,29 +64,41 @@ key too (every key starts off).
 
 ![The new key's one-time secret](docs/images/new-key-secret.png)
 
-**4. Enable webhook delivery.** In **Advanced**, turn on the **Webhook
-delivery** door. To deliver to a receiver on this machine, add its `host:port`
-(e.g. `127.0.0.1:8787`) under **Local targets** *before* you register the
+**4. Enable webhook delivery.** In **Advanced**, under **Webhook delivery**, turn
+on **Outgoing (webhooks)**. To deliver to a receiver on this machine, type its
+`host:port` (e.g. `127.0.0.1:8787`) under **Local targets** and click **Allow**
+*before* you register the
 webhook -- otherwise registration is refused with `400 bad_request` ("url host
 is not allowed (loopback/private)"). It takes effect immediately, no restart
 needed.
 
-![Webhook delivery door and Local targets, inside Advanced](docs/images/webhook-delivery.png)
+![Outgoing (webhooks) switch and Local targets, inside Advanced](docs/images/webhook-delivery.png)
 
-**5. Approve the destination.** After a key registers a webhook, Meetily shows a
-**"Waiting for you"** banner. Click **Allow** so its `approval_state` becomes
+**5. Approve the destination.** After a key registers a webhook, Meetily pops up
+an **Approval needed** notification ("*key* wants to send meeting events to
+*host*"), and the same request waits in the **Waiting for you** strip at the
+top of **Settings > Integrations**. Click **Allow** so its `approval_state` becomes
 `allowed` -- only `allowed` delivers, and a `pending` destination fails
 silently. Every destination, including one you denied, is also listed under
 **Advanced > Destinations**, where you can allow it later.
 
-![The "Waiting for you" banner, with Allow / Don't allow](docs/images/approve-destination.png)
+![The "Approval needed" notification, with Allow / Deny](docs/images/approve-destination.png)
 
 To connect an AI assistant instead, use the **AI assistants (MCP)** section and
 click **Connect** on a detected client (Claude Desktop, Claude Code, Cursor, ...).
 The Integrations master switch at the top of the tab has to be on first -- no
-restart needed either way.
+restart of Meetily needed.
 
 ![AI assistants Connect list](docs/images/connect-assistant.png)
+
+Choose what the assistant may do (it starts read-only), then click **Connect**.
+
+![What the assistant is allowed to do](docs/images/mcp-grant.png)
+
+Like every key, a new connection starts off: turn on its **Allow** switch, then
+restart the assistant so it picks up the new server.
+
+![Not allowed yet: turn on Allow](docs/images/mcp-allow.png)
 
 Full walkthrough (both platforms, plus pairing a remote device):
 **https://docs.meetily.ai/developers/enable-and-connect**

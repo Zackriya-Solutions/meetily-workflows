@@ -65,8 +65,8 @@ prints the failing code for you; the ones you'll hit while wiring this up:
   Create a key in **Settings > Integrations > Apps & scripts**.
 - `403 consumer_disabled` -- the key exists but its **Allow** switch is off
   (every key starts off). Turn it on in **Settings > Integrations**.
-- `409 webhooks_disabled` -- the **Webhook delivery** door is off. Turn it
-  on under **Settings > Integrations > Advanced**.
+- `409 webhooks_disabled` -- webhook delivery is off. Turn on **Outgoing
+  (webhooks)** under **Settings > Integrations > Advanced**.
 
 None of these is retryable by itself (`retryable: false`) -- fix the setting, then
 re-run the script.

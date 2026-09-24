@@ -76,7 +76,7 @@ def main() -> None:
     except MeetilyApiError as exc:
         if exc.code == "webhooks_disabled":
             print(f"cannot register webhook (webhooks_disabled): {exc.message or exc.body}")
-            print("Turn on Webhook delivery under Settings > Integrations > Advanced.")
+            print("Turn on 'Outgoing (webhooks)' under Settings > Integrations > Advanced.")
             return
         if exc.code == "bad_request" and "not allowed" in (exc.message or ""):
             print(f"cannot register webhook: {exc.message}")
