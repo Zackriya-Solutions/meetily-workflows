@@ -15,7 +15,9 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import queue
 import threading
+import traceback
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Callable
 
@@ -48,6 +50,12 @@ class LocalWebhookReceiver:
     Runs on 127.0.0.1 only -- this is a receiver for local examples, not a
     production ingress. For any host other than loopback, "nothing leaves
     the machine" no longer holds.
+
+    Each delivery is acknowledged (200) as soon as its signature is verified
+    and deduped; on_event then runs on one background worker thread, in
+    delivery order. Meetily gives a delivery 5 seconds before treating it as
+    failed and retrying, so a slow on_event (fetching a transcript, calling an
+    LLM) must not run before the ack.
     """
 
     def __init__(
@@ -61,6 +69,8 @@ class LocalWebhookReceiver:
         self._on_event = on_event
         self._seen_event_ids: set[str] = set()
         self._lock = threading.Lock()
+        self._queue: queue.Queue = queue.Queue()
+        self._worker: threading.Thread | None = None
 
         receiver = self
 
@@ -91,14 +101,14 @@ class LocalWebhookReceiver:
                     if event_id is not None:
                         receiver._seen_event_ids.add(event_id)
 
-                if not already_seen:
-                    receiver._on_event(payload)
-
                 # A 2xx here means "accepted for processing", not that any
                 # downstream automation triggered by this event has succeeded.
                 self.send_response(200)
                 self.end_headers()
                 self.wfile.write(b"accepted")
+
+                if not already_seen:
+                    receiver._queue.put(payload)
 
             def log_message(self, fmt, *args):  # silence default stderr logging
                 pass
@@ -111,7 +121,19 @@ class LocalWebhookReceiver:
         host, port = self._server.server_address
         return f"http://{host}:{port}/webhook"
 
+    def _run_worker(self) -> None:
+        while True:
+            payload = self._queue.get()
+            if payload is None:
+                return
+            try:
+                self._on_event(payload)
+            except Exception:  # keep the worker alive for the next event
+                traceback.print_exc()
+
     def start(self) -> None:
+        self._worker = threading.Thread(target=self._run_worker, daemon=True)
+        self._worker.start()
         self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
         self._thread.start()
 
@@ -120,6 +142,9 @@ class LocalWebhookReceiver:
         self._server.server_close()
         if self._thread:
             self._thread.join(timeout=5)
+        self._queue.put(None)  # let queued events finish, then exit the worker
+        if self._worker:
+            self._worker.join(timeout=30)
 
     def __enter__(self) -> "LocalWebhookReceiver":
         self.start()
