@@ -62,7 +62,7 @@ body:
     id: scopes
     attributes:
       label: Scopes the workflow needs
-      description: read is implied for all; check what it actually uses.
+      description: read is implied for all; check what it actually uses. record, write, and delete need a key the user creates (Settings > Integrations > Apps & scripts > Create key) -- your README must show that step.
       options:
         - label: read
         - label: record

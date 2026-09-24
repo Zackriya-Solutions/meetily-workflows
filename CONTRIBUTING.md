@@ -79,6 +79,7 @@ reviews the manifest and your linked code (and may run it) before listing it.
 - [ ] Handles a `pending` destination (delivers nothing until approved).
 - [ ] Declares the real `scopes` it needs; nothing more.
 - [ ] Runs standalone; documents its setup (token, local webhook target, etc.).
+- [ ] If `scopes` includes `record`, `write`, or `delete`: the README walks through creating that key (**Settings > Integrations > Apps & scripts > Create key**, tick the scope, copy the secret, turn on **Allow**, pass it via `MEETILY_PRO_TOKEN` or `--token-file`). The loopback token is Read-only and will get `403 insufficient_scope`.
 - [ ] Tested against a real Meetily instance.
 - [ ] `manifest.yaml` validates; `scripts/generate_catalog.py` run and committed.
 

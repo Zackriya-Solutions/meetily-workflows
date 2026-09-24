@@ -6,14 +6,15 @@ Agent API without pulling in a third-party dependency. Treat it as example
 code, not a library: no versioning guarantees, no support, copy what you need.
 
 Contract source of truth: https://docs.meetily.ai/developers and
-GET /v1/openapi.json on a running instance.
+GET /openapi.json on a running instance.
 """
 
-from .client import MeetilyClient, discover_token
+from .client import MeetilyApiError, MeetilyClient, discover_token
 from .webhook import LocalWebhookReceiver, verify_signature
 
 __all__ = [
     "discover_token",
+    "MeetilyApiError",
     "MeetilyClient",
     "verify_signature",
     "LocalWebhookReceiver",

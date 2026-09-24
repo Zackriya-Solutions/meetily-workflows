@@ -10,19 +10,69 @@ here, just the CLI command and a couple of prompts to try.
 meetily-pro mcp install
 ```
 
-This merges a Meetily MCP server entry into your assistant's client config
-and mints a scoped token for it. Restart the assistant afterwards so it
-picks up the new server.
+This does not install anything by itself -- it is a handoff. Meetily is the
+single owner of assistant registration, so `install` only prints the
+`mcpServers` entry the app will write plus a pointer to the app screen. It
+never mints a token or touches your client config, and its `--record` /
+`--write` flags are accepted but do nothing.
+
+## Token: Connect mints it for you
+
+The MCP server needs a token like every other client, but you don't create
+it by hand:
+
+1. In **Settings > Integrations > AI assistants (MCP)**, press **Connect**
+   next to your assistant.
+2. Choose what it may do, then press **Connect** in that panel. The app mints
+   a scoped token just for that assistant and writes the `mcpServers` entry
+   for you.
+3. Turn on the assistant's **Allow** switch. Every new connection starts off
+   ("Not allowed yet"), and an off connection is refused.
+4. Restart the assistant so it picks up the new server.
+
+![Choosing what the assistant may do](../../docs/images/mcp-grant.png)
+
+That token starts **read-only**. If you want the assistant to start/stop
+recording or to write (rename meetings, save or regenerate summaries,
+control jobs), turn on **Record (start/stop mic)** and/or **Write** for that assistant in the
+app -- there is no command-line flag for it. The same screen also offers a
+**Delete** toggle, but no MCP tool deletes anything, so leave it off. A tool
+call the token isn't scoped for fails with
+`insufficient_scope`.
+
+If you'd rather write the client config entry by hand, this is the shape
+the app writes (macOS path shown). The token file is the one the app minted for that
+assistant, so it's simplest to let **Connect** write it:
+
+```json
+{
+  "mcpServers": {
+    "meetily": {
+      "command": "/Applications/Meetily Pro.app/Contents/MacOS/meetily-pro",
+      "args": ["mcp", "--server", "http://127.0.0.1:8420", "--token-file", "<path the app gives you>"]
+    }
+  }
+}
+```
 
 The server is **read-first**: by default it exposes read-oriented resources
 and tools (meetings, transcripts, summaries). Deletes are never exposed
 through MCP, regardless of scope.
 
-To force a strictly read-only token (no record/write tools at all), install
-with:
+To run the server itself in strictly read-only mode (hide and refuse every
+record/write tool, no matter what the token is scoped to), pass
+`--read-only` to the serve command -- not to `install`, which has no such
+flag:
 
 ```bash
-meetily-pro mcp install --read-only
+meetily-pro mcp --read-only
+```
+
+For diagnostics (gateway reachable, Pro license tier, token scopes, with
+remediation), run:
+
+```bash
+meetily-pro mcp doctor
 ```
 
 ## Example prompts

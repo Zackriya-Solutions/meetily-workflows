@@ -20,6 +20,7 @@ Fill this in if you are adding a `community-workflows/<id>/manifest.yaml`.
 - [ ] Handles a **`pending`** destination (delivers nothing until approved).
 - [ ] Declares the **real `scopes`** it needs, and nothing more.
 - [ ] Runs **standalone**; setup (token, local webhook target, etc.) is documented at `source_url`.
+- [ ] If `scopes` includes `record`, `write`, or `delete`: the setup docs show how to **create a key with that scope** (Settings > Integrations > Apps & scripts > Create key, then **Allow** it). The loopback token is Read-only.
 - [ ] **Tested against a real Meetily instance.**
 - [ ] Ran `python scripts/generate_catalog.py` and committed the updated catalog tables.
 - [ ] `trigger` is a live id (`recording-ends` / `summary-ready` / `import-finishes`) or `manual` / `scheduled` (not `transcript-ready`).

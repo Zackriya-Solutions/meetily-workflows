@@ -34,7 +34,7 @@
       "type": "array",
       "items": { "type": "string", "enum": ["read", "record", "write", "delete"] },
       "uniqueItems": true,
-      "description": "Scopes the workflow's key needs. read is implied for all; list what it actually uses."
+      "description": "Scopes the workflow's key needs. read is implied for all; list what it actually uses. record/write/delete need a key the user creates in Settings > Integrations > Apps & scripts (the loopback token is Read-only), and the workflow's README must document that step."
     },
     "source_url": {
       "type": "string",
