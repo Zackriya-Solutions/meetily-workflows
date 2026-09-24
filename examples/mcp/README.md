@@ -10,19 +10,51 @@ here, just the CLI command and a couple of prompts to try.
 meetily-pro mcp install
 ```
 
-This merges a Meetily MCP server entry into your assistant's client config
-and mints a scoped token for it. Restart the assistant afterwards so it
-picks up the new server.
+This does not install anything by itself -- it is a handoff. Meetily is the
+single owner of assistant registration, so `install` only prints the
+`mcpServers` entry the app will write plus the name of the screen where you
+actually connect an assistant: **Settings > Integrations > AI assistants
+(MCP)**. It never mints a token or touches your client config, and its
+`--record` / `--write` flags are accepted but do nothing.
+
+Open that screen and press **Connect** next to your assistant. The app
+mints a scoped, per-client token and writes the `mcpServers` entry for you.
+The token starts read-only -- Record, Write, and Delete are each a separate
+opt-in you make in the app, not on the command line. Restart the assistant
+afterwards so it picks up the new server.
+
+If you'd rather write the client config entry by hand, this is the shape
+the app writes:
+
+```json
+{
+  "mcpServers": {
+    "meetily": {
+      "command": "<path to the meetily-pro binary>",
+      "args": ["mcp", "--server", "http://127.0.0.1:8420", "--token-file", "<path the app gives you>"]
+    }
+  }
+}
+```
 
 The server is **read-first**: by default it exposes read-oriented resources
 and tools (meetings, transcripts, summaries). Deletes are never exposed
 through MCP, regardless of scope.
 
-To force a strictly read-only token (no record/write tools at all), install
-with:
+To run the server itself in strictly read-only mode (hide and refuse every
+record/write tool, no matter what the token is scoped to), pass
+`--read-only` to the serve command -- not to `install`, which has no such
+flag:
 
 ```bash
-meetily-pro mcp install --read-only
+meetily-pro mcp --read-only
+```
+
+For diagnostics (gateway reachable, Pro license tier, token scopes, with
+remediation), run:
+
+```bash
+meetily-pro mcp doctor
 ```
 
 ## Example prompts
