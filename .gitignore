@@ -13,6 +13,9 @@ venv/
 .env
 .env.*
 !*.env.example
+webhook-secret.txt
+payload.json
+summaries/
 
 # OS
 .DS_Store

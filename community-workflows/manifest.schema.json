@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/Zackriya-Solutions/meetily-workflows/community-workflows/manifest.schema.json",
   "title": "Meetily community workflow catalog manifest",
-  "description": "Metadata for one community-built automation. A forward-compatible subset of the future wf/ execution manifest. Does not host or run code; it catalogs a workflow that runs standalone against the shipping Meetily Agent API.",
+  "description": "Metadata for standalone Agent API automations, not an execution manifest.",
   "type": "object",
   "additionalProperties": false,
   "required": ["manifest_version", "id", "name", "description", "author", "language", "trigger", "scopes", "source_url", "entry", "run"],
@@ -28,7 +28,7 @@
     "trigger": {
       "type": "string",
       "enum": ["recording-ends", "summary-ready", "import-finishes", "manual", "scheduled"],
-      "description": "A live frozen trigger id, or manual/scheduled for non-event automations. transcript-ready is intentionally not accepted (dormant, no producer yet)."
+      "description": "Catalog category; first three map to live webhook events, not workflow subscriptions. transcript-ready has no producer."
     },
     "scopes": {
       "type": "array",
@@ -40,7 +40,7 @@
       "type": "string",
       "format": "uri",
       "pattern": "^https?://",
-      "description": "Where the workflow's code lives (the contributor's own repo). Code is never hosted in this repo."
+      "description": "Code repository; the first-party example lives here."
     },
     "ref": { "type": "string", "maxLength": 120, "description": "Optional tag or commit to pin for reproducibility." },
     "entry": { "type": "string", "minLength": 1, "maxLength": 200, "description": "Path to the entry file within source_url." },

@@ -103,11 +103,15 @@ def main() -> int:
     stale = []
     for path in TARGETS:
         if not path.exists():
-            print(f"skip (missing): {path}")
+            print(f"missing catalog target: {path}")
+            if check:
+                stale.append(str(path.relative_to(ROOT)))
             continue
         new = splice(path, table)
         if new is None:
-            print(f"WARNING: no catalog markers in {path}; skipping")
+            print(f"missing catalog markers in {path}")
+            if check:
+                stale.append(str(path.relative_to(ROOT)))
             continue
         if new != path.read_text(encoding="utf-8"):
             if check:
@@ -116,7 +120,7 @@ def main() -> int:
                 path.write_text(new, encoding="utf-8")
                 print(f"updated {path.relative_to(ROOT)}")
     if check and stale:
-        print("Catalog index is STALE (run scripts/generate_catalog.py and commit):")
+        print("Catalog index is STALE or incomplete (restore targets/markers or regenerate):")
         for s in stale:
             print("  -", s)
         return 1

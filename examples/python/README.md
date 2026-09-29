@@ -13,6 +13,7 @@ Two small scripts built on the vendored `meetily_agent` helper
   Advanced > Local targets** *before* running the script -- it takes effect
   immediately, no restart needed. Without it, registration fails with
   `400 bad_request` ("url host is not allowed (loopback/private)").
+- Turn on **Outgoing (webhooks)** under **Settings > Integrations > Advanced**.
 - Python 3.9+.
 
 ## Token first
@@ -38,26 +39,36 @@ Full table of which scope each route needs: main
 
 ## brief_on_recording_stopped.py
 
-Subscribes to `recording.stopped` (the recording-ends trigger). On each new
-event, waits 10 seconds (the meeting's title and transcript finish saving a
-few seconds after capture stops), then fetches the meeting and its transcript
-and prints a short preview. Idempotent on `event_id`. Deletes its webhook on
-exit (Ctrl-C).
+`recording.stopped` means capture ended, **not** that the transcript is ready.
+This script waits 10 seconds and prints a best-effort preview; text or title
+may still be missing or partial. From the repository root:
 
 ```bash
-python3 brief_on_recording_stopped.py
+python3 examples/python/brief_on_recording_stopped.py
 ```
+
+Leave it running and stop a recording. If the destination is `pending`, allow
+it in **Settings > Integrations > Waiting for you**. The output is a snapshot,
+not confirmation of saved content. For a finished summary, watch
+`summary.completed` instead; there is no callable saved-recording observation
+route yet. Ctrl-C deletes the webhook.
 
 ## summary_ready_backup.py
 
-Subscribes to `summary.completed` (the summary-ready trigger). On each new
-event, fetches the summary and writes it to `./summaries/<meeting_id>.json`.
-Read-only against Meetily -- no write-scoped token needed. This is a stub:
-extend `save_summary()` if you want to do more than save a file.
+The runnable first-party [catalog example](../../community-workflows/README.md)
+listens for `summary.completed` and saves `./summaries/<meeting_id>.json` in
+your working directory. It only needs Read access. From the repository root:
 
 ```bash
-python3 summary_ready_backup.py
+python3 examples/python/summary_ready_backup.py
 ```
+
+Allow a `pending` destination in **Settings > Integrations > Waiting for you**,
+then generate a summary. Look for `saved summary for <id> -> ...`; a
+regeneration warning means the file contains the prior summary. Ctrl-C deletes
+the webhook. Exports contain meeting content: use a private location outside
+the repo for regular use (`OUTPUT_DIR` in the script). The default `summaries/`
+directory is Git-ignored, not encrypted.
 
 ## Notes
 
@@ -70,8 +81,3 @@ python3 summary_ready_backup.py
   checks out, then runs your callback on a background thread. Meetily gives
   each delivery 5 seconds, so slow work in the callback (fetching, calling
   an LLM) won't cause timeouts or retries.
-- The first webhook a token registers to a host starts as
-  `approval_state=pending` and delivers nothing until approved under
-  the **Waiting for you** strip at the top of **Settings > Integrations** (or
-  later under **Advanced > Destinations**). Both scripts print a note if
-  that's the case.

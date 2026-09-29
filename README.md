@@ -6,20 +6,15 @@ server, and webhooks that already exist in the Pro app. It shows the pattern
 (subscribe to an event, verify it, fetch the content you need, act on it) with
 small, runnable examples.
 
-It is **not** the Workflows product. Meetily Workflows (workflow definitions,
-connectors, a manifest schema, an execution engine) is a separate, next-release
-product. This repo does not scaffold any of that -- see
-[Open question](#open-question-whats-next).
+Packaged Workflows are not shipped and have no announced release date. These
+examples use the Agent API; see the [Workflows docs](https://docs.meetily.ai/developers/workflows).
 
 > **Availability:** the Meetily Agent API (and the automations you build on it)
 > is a **Meetily Pro** feature today. Support for the **Community (open-source)
 > edition** is coming soon.
 
-> **Version:** everything here matches **Meetily Pro 1.10.0**, the first
-> release with the Automation API. The API is **off by default**; nothing
-> listens until you turn it on (see [Setup](#setup-turn-it-on)). The
-> `meetily-pro` CLI ships inside the app, and `meetily-pro mcp doctor` warns
-> if the CLI and app versions differ.
+> **Version:** Meetily Pro **1.11.0+** with an active license or trial is required.
+> The Automation API is off by default; [turn it on](#setup-turn-it-on).
 
 > Full developer documentation: **https://docs.meetily.ai/developers**. The
 > tables below are a quick reference; the docs site and `GET /openapi.json` are
@@ -147,22 +142,22 @@ Record/Write/Delete for it in the app.
 
 ## The frozen trigger catalogue
 
-The trigger ids you can build on today, the backing event each maps to, and
-whether that event fires in the current release:
+These IDs are reserved for future Workflows. Subscribe to their live backing
+webhook events, not the trigger IDs:
 
-| Trigger id | Backing event | State |
+| Trigger ID | Backing event | Available today |
 |---|---|---|
-| `recording-ends` | `recording.stopped` | LIVE |
-| `summary-ready` | `summary.completed` | LIVE |
-| `import-finishes` | `job.completed` (import job) | LIVE |
-| `transcript-ready` | `transcription.completed` | **DORMANT** -- no producer this release |
-
-Do not subscribe to `transcription.completed` expecting it to fire; it is
-reserved with no producer behind it yet.
+| `recording-ends` | `recording.stopped` | Event live; trigger reserved |
+| `summary-ready` | `summary.completed` | Event live; trigger reserved |
+| `import-finishes` | `job.completed` (import job) | Event live; trigger reserved |
+| `transcript-ready` | `transcription.completed` | No event producer |
 
 ## Build against the API today
 
-Every example follows the same shape:
+Try the [Python summary backup](examples/python/README.md) to save a meeting's
+summary. The [curl snippets](examples/curl/README.md) require your own receiver.
+
+A complete automation follows this shape:
 
 0. **Get the right token** -- the loopback token for read-only work, or a key
    you created for anything that records, writes, or deletes (see
@@ -302,22 +297,20 @@ https://docs.meetily.ai/developers/events
 
 Notes:
 - `recording stop` while nothing is recording is a no-op (200, state `idle`) and fires no `recording.stopped` event.
-- `recording.stopped` fires as soon as capture stops. The meeting's final title and transcript finish saving a few seconds later, so wait briefly before fetching them (the `brief_on_recording_stopped.py` example waits 10 s).
-- Known limitation in 1.10.0: stop is bound to the last session the gateway recorded, not necessarily the live recording. The stop reply can name a stale `capture_session`, and a stop targeted at a stale session id could stop a different live recording. Send an untargeted stop unless the session id came from your own `start` call.
+- `recording.stopped` means capture ended, not that content is saved. The [recording preview](examples/python/README.md) waits 10 seconds only as a best-effort delay.
+- `?session=` can match a stale gateway session when desktop controls are used; HTTP start returns no `capture_session` to target. An untargeted stop acts on the current recording, not necessarily your own. See the [recording API](https://docs.meetily.ai/developers/api-reference#recording).
 - A key scoped to specific meetings only sees those meetings; the jobs write routes (`cancel`/`pause`/`resume`/`retry`/`diarization`) enforce the same scope, and `active_meeting_id` is redacted to `null` for a scoped key when the active meeting is outside its scope.
 - The same concept has two wire names depending on transport: a content-preserving regeneration failure is `regeneration_failed: true` in the `GET .../summary` response, and `content_preserved` on the `summary.completed` event.
 
 ## Community workflows
 
-Automations built by the community, cataloged here. Each entry is a **manifest**
-(metadata) pointing at the contributor's own repo -- **the code is not hosted
-here**. Workflows run standalone against the shipping API/CLI/MCP/webhooks; they
-do not integrate with the app in this version.
+This is a metadata catalog of standalone automations, not an installer. The
+first-party summary backup below lives here; contributors link to their own code.
 
 <!-- BEGIN CATALOG -->
 | Workflow | Trigger | Language | Scopes | Author |
 | --- | --- | --- | --- | --- |
-| [Summary file backup](https://github.com/Zackriya-Solutions/meetily-workflows) | `summary-ready` | python | read | Meetily (github.com/Zackriya-Solutions) |
+| [Summary file backup](https://github.com/Zackriya-Solutions/meetily-workflows/blob/main/examples/python/summary_ready_backup.py) | `summary-ready` | python | read | Meetily (github.com/Zackriya-Solutions) |
 
 _1 community workflow(s). Generated from `community-workflows/*/manifest.yaml` by `scripts/generate_catalog.py` -- do not edit this table by hand._
 <!-- END CATALOG -->

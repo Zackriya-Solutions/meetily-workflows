@@ -9,9 +9,8 @@ Most contributions are the first kind. This guide covers it.
 
 ## Add a community workflow
 
-Your workflow's **code lives in your own repo**. Here you add a small **manifest**
-that catalogs it. The catalog table in the READMEs is generated from these
-manifests -- you never edit the table by hand.
+Add a manifest linking to code in your own repo; the first-party summary
+backup is the exception. README tables are generated, not edited by hand.
 
 ### 1. Build a workflow that runs against the shipping API
 
@@ -43,16 +42,14 @@ source_url: https://github.com/you/your-repo
 ref: v1.0.0                     # optional: pin a tag/commit
 entry: run.py                   # path within source_url
 run: "python run.py"            # how to run it standalone
-meetily_min_version: "1.9.3"    # optional
+meetily_min_version: "1.11.0"   # optional; Agent API requires Pro 1.11.0+
 tags: [slack, summary]          # optional
 license: MIT                    # optional
 ```
 
 Notes:
-- **`trigger`** must be a live frozen id (`recording-ends`, `summary-ready`,
-  `import-finishes`) or `manual` / `scheduled` for non-event tools.
-  `transcript-ready` is **not accepted yet** -- it is dormant (no producer in this
-  release).
+- `trigger` is catalog metadata, not a runnable subscription. The first three
+  IDs map to live webhook events; `transcript-ready` has no producer.
 - **Any language** is fine as long as it speaks the shipping surface; declare it
   in `language` and give the exact `run` command.
 
@@ -92,11 +89,8 @@ before merging; you can also run it locally. **CI never executes contributor cod
 
 ## Out of scope
 
-The catalog manifest is **metadata only**. Do **not** add a workflow *execution
-engine*, a connector framework, or the full `wf/` execution manifest -- those are
-the separate, next-release Workflows product. This repo catalogs workflows and
-demonstrates the shipped API/CLI/MCP/webhook layer; it does not run workflows for
-you.
+The catalog manifest is metadata, not an installable workflow definition.
+Packaged Workflows have no announced release date or execution manifest.
 
 ## Improving examples or the helper
 

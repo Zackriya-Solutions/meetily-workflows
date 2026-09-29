@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-"""Print a short brief each time a recording finishes.
+"""Print a best-effort meeting preview after each recording stops.
 
-Registers a recording.stopped webhook, verifies and dedups deliveries via
-LocalWebhookReceiver, and on each new event fetches the meeting and its
-transcript with the resolved token to print a preview. Deletes its own
-webhook on exit.
+Registers recording.stopped and prints a best-effort preview after 10 seconds.
+The transcript may be partial. Deletes its webhook on exit.
 
 Token: read-only is enough, so the loopback token works (turn on "Allow the
 CLI on this computer" in Settings > Integrations). If you extend this to
@@ -34,10 +32,7 @@ from meetily_agent.client import TOKEN_HELP  # noqa: E402
 
 RECEIVER_PORT = 9001
 WEBHOOK_URL = f"http://127.0.0.1:{RECEIVER_PORT}/webhook"
-# recording.stopped fires as soon as capture stops; the meeting's final title
-# and transcript finish saving a few seconds later (seen live: ~5s). Wait a
-# little before fetching. This runs after the delivery is acknowledged, so it
-# does not hold up Meetily's 5-second delivery timeout.
+# Delay for a best-effort preview, not a readiness guarantee.
 SETTLE_SECONDS = 10
 
 
@@ -48,21 +43,25 @@ def print_brief(client: MeetilyClient, event: dict) -> None:
         return
 
     time.sleep(SETTLE_SECONDS)
-    meeting = client.get(f"/v1/meetings/{meeting_id}")
+    try:
+        meeting = client.get(f"/v1/meetings/{meeting_id}")
+    except Exception as exc:  # preview failures must not stop the receiver
+        print(f"\n=== {meeting_id} ===")
+        print(f"(meeting unavailable at preview time: {exc})")
+        return
     title = meeting.get("title") or "(untitled meeting)"
 
     try:
-        # Transcript shape (verified live): {meeting_id, title, segments: [{text, timestamp,
-        # audio_start_time, audio_end_time, duration}, ...]}. Join the segment texts.
+        # Segments can still arrive after capture ends.
         transcript = client.get(f"/v1/meetings/{meeting_id}/transcript")
         segments = transcript.get("segments", []) if isinstance(transcript, dict) else []
         text = " ".join(s.get("text", "") for s in segments).strip()
         preview = text[:280] + ("..." if len(text) > 280 else "")
-    except Exception as exc:  # transcript may not be ready yet, or fetch failed
-        preview = f"(could not fetch transcript: {exc})"
+    except Exception as exc:  # the transcript may still be saving or the API may be unavailable
+        preview = f"(transcript unavailable at preview time: {exc})"
 
     print(f"\n=== {title} ({meeting_id}) ===")
-    print(preview or "(empty transcript)")
+    print(preview or "(no transcript segments available at preview time)")
 
 
 def main() -> None:

@@ -1,15 +1,16 @@
 manifest_version: 1
 id: summary-file-backup
 name: Summary file backup
-description: Saves each meeting summary to a local JSON file when it is ready. Doubles as the reference example for the catalog manifest format.
+description: Backs up the summary returned after a summary.completed event; a failed regeneration may return the prior summary. Reference catalog example.
 author: Meetily (github.com/Zackriya-Solutions)
 language: python
 trigger: summary-ready
 scopes: [read]
 source_url: https://github.com/Zackriya-Solutions/meetily-workflows
+homepage: https://github.com/Zackriya-Solutions/meetily-workflows/blob/main/examples/python/summary_ready_backup.py
 ref: main
 entry: examples/python/summary_ready_backup.py
 run: "python examples/python/summary_ready_backup.py"
-meetily_min_version: "1.9.3"
+meetily_min_version: "1.11.0"
 tags: [summary, backup, reference]
 license: MIT
