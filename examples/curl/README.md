@@ -1,118 +1,70 @@
-# curl examples
+# curl snippets
 
-Register and verify a Meetily webhook using only `curl` and `openssl` --
-useful for a quick sanity check before writing any code.
+These scripts register a webhook and verify a delivery captured by **your own
+HTTP receiver**. They do not start a receiver. For an example that registers
+and listens without extra code, use the [Python summary backup](../python/README.md);
+it creates its own webhook and cannot receive deliveries for this one.
 
 ## Prerequisites
 
-- Meetily desktop app running with the Automation API turned on (main [README > Setup](../../README.md#setup-turn-it-on)).
-- A token in `MEETILY_PRO_TOKEN` -- see [Token first](#token-first).
-- `python3` on PATH (used only to pull `id` and `hmac_secret` out of the
-  JSON response -- no other dependency).
+- Meetily Pro 1.11.0+ with the Automation API and **Outgoing (webhooks)** on.
+  See [Setup](../../README.md#setup-turn-it-on).
+- A Read-scoped token exported as `MEETILY_PRO_TOKEN` ([token setup](../../README.md#tokens-pick-the-right-one-first)).
+- A receiver already listening at your chosen URL that can save the **raw**
+  request body and the `X-Meetily-Timestamp` and `X-Meetily-Signature` headers.
+  For a loopback/private URL, add its `host:port` under **Settings >
+  Integrations > Advanced > Local targets** before registration.
+- Bash, curl, OpenSSL, and Python 3. On Windows use Git Bash; if Python is
+  installed as `python`, run `export PYTHON=python` first.
 
-## Token first
+## Register
 
-Every call needs a token, and the token decides what the script may do:
-
-- **Read-only (these examples):** the loopback token works. Turn on **Allow
-  the CLI on this computer** in **Settings > Integrations**, then load the
-  loopback token file into the variable the scripts read:
-  ```bash
-  # macOS; Windows: %APPDATA%\pro.meetily.ai\gateway-token,
-  # Linux: $XDG_DATA_HOME/pro.meetily.ai/gateway-token
-  export MEETILY_PRO_TOKEN="$(cat ~/Library/Application\ Support/pro.meetily.ai/gateway-token)"
-  ```
-- **Anything that records, writes, or deletes** (start/stop recording, save
-  or regenerate a summary, control jobs, delete a meeting): the loopback
-  token is Read-only and gets `403 insufficient_scope`. Create a key instead:
-  1. **Settings > Integrations > Apps & scripts > Create key**; tick only the
-     scope you need (Record / Write / Delete).
-  2. Copy the secret -- it is shown once.
-  3. Turn on the key's **Allow** switch (keys start off; an off key gets
-     `403 consumer_disabled`).
-  4. `export MEETILY_PRO_TOKEN='<the secret>'`, then check it with
-     `meetily-pro whoami`.
-
-Full table of which scope each route needs: main
-[README > Tokens](../../README.md#tokens-pick-the-right-one-first).
-
-## Files
-
-- `subscribe-and-verify.sh` -- registers a `recording.stopped` webhook and
-  saves the one-time `hmac_secret` to a `0600` file.
-- `verify.sh` -- checks a received delivery's `X-Meetily-Signature` header
-  against the saved secret, using `openssl dgst -hmac`.
-
-## Run it
+From the repo root, replace the URL with your receiver's address:
 
 ```bash
-export MEETILY_PRO_TOKEN=...   # loopback token or a key you created (see Token first)
-
+cd examples/curl
 ./subscribe-and-verify.sh http://127.0.0.1:9000/webhook
 ```
 
-Before running it, add `127.0.0.1:9000` under **Settings > Integrations >
-Advanced > Local targets** -- it takes effect immediately, no restart needed.
-A loopback or private receiver that isn't listed there is refused at
-registration with `400 bad_request` ("url host is not allowed
-(loopback/private)").
+The script prints a webhook ID and saves its one-time secret to
+`./webhook-secret.txt` without printing it. On POSIX it uses mode `0600`;
+on Windows keep the file in a directory private to your account.
+The first destination for a token/host starts `pending`: **Allow** it under
+**Settings > Integrations > Waiting for you** (or **Advanced > Destinations**).
+Registration alone does not deliver anything.
 
-If the subscribe call fails, the response body is the real error envelope,
-`{"error":{"code":"...","message":"...","retryable":false}}`. The script
-prints the failing code for you; the ones you'll hit while wiring this up:
+## Verify a delivery
 
-- `401 unauthorized` -- the token is missing, unknown, expired, or revoked.
-  Create a key in **Settings > Integrations > Apps & scripts**.
-- `403 consumer_disabled` -- the key exists but its **Allow** switch is off
-  (every key starts off). Turn it on in **Settings > Integrations**.
-- `409 webhooks_disabled` -- webhook delivery is off. Turn on **Outgoing
-  (webhooks)** under **Settings > Integrations > Advanced**.
-
-None of these is retryable by itself (`retryable: false`) -- fix the setting, then
-re-run the script.
-
-Registering does not wait for approval. The first webhook a token registers
-to a host comes back `201` with `approval_state=pending` and delivers nothing
-until you **Allow** it in
-the **Waiting for you** strip at the top of **Settings > Integrations** (or
-later under **Advanced > Destinations**). Approval is per token and host, so
-later webhooks from the same token to that host come back `allowed` right
-away. Check status with:
+Use the printed webhook ID to send a test event after approval:
 
 ```bash
-curl -H "Authorization: Bearer $MEETILY_PRO_TOKEN" \
-  http://127.0.0.1:8420/v1/webhooks/<id>
+WEBHOOK_ID='<printed webhook id>'
+curl -sS -X POST -H "Authorization: Bearer $MEETILY_PRO_TOKEN" \
+  "http://127.0.0.1:8420/v1/webhooks/$WEBHOOK_ID/test"
 ```
 
-Once it is `allowed`, you can fire a test delivery. Before approval this
-returns `409 host_not_approved`:
+Your receiver must capture the delivered body **byte for byte**, without
+re-serializing JSON, for example as `payload.json`. Copy the literal header
+values it received, then check them locally:
 
 ```bash
-curl -X POST -H "Authorization: Bearer $MEETILY_PRO_TOKEN" \
-  http://127.0.0.1:8420/v1/webhooks/<id>/test
-```
-
-When an event arrives at your receiver, capture the raw request body and the
-`X-Meetily-Signature` / `X-Meetily-Timestamp` headers, then check the
-signature by hand:
-
-```bash
+TIMESTAMP='<X-Meetily-Timestamp value>'
+SIGNATURE='<X-Meetily-Signature value>'
 ./verify.sh ./webhook-secret.txt "$TIMESTAMP" ./payload.json "$SIGNATURE"
 ```
 
-Clean up your webhook when you're done:
+`OK: signature matches` verifies those bytes. A test event contains no
+meeting content. A real `recording.stopped` event means capture ended, not
+that the transcript is ready; fetch content separately with your token.
+Deliveries may repeat, so production receivers must deduplicate `event_id`.
+
+## Clean up
 
 ```bash
-curl -X DELETE -H "Authorization: Bearer $MEETILY_PRO_TOKEN" \
-  http://127.0.0.1:8420/v1/webhooks/<id>
+curl -sS -X DELETE -H "Authorization: Bearer $MEETILY_PRO_TOKEN" \
+  "http://127.0.0.1:8420/v1/webhooks/$WEBHOOK_ID"
+rm -f webhook-secret.txt payload.json
 ```
 
-## Notes
-
-- Delivery is best-effort, at-least-once, up to 6 attempts while the app
-  runs. You may see duplicate deliveries of the same `event_id`; a real
-  receiver must be idempotent on it.
-- A 2xx response from your receiver means "accepted", not "your automation
-  succeeded".
-- The event body carries no transcript or summary text -- fetch content with
-  your token, e.g. `GET /v1/meetings/{id}`.
+The default secret and example payload filename are Git-ignored, but keep
+secrets and meeting-content exports outside this repository for regular use.

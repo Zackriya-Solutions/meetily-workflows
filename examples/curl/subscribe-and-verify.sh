@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Register a recording.stopped webhook against a running Meetily instance,
-# and save the one-time hmac_secret to a 0600 file for use with verify.sh.
+# and save the one-time hmac_secret to a private file for use with verify.sh.
 #
 # Usage:
 #   MEETILY_PRO_TOKEN=<token> ./subscribe-and-verify.sh [receiver-url]
@@ -21,6 +21,7 @@ set -euo pipefail
 BASE="${MEETILY_BASE:-http://127.0.0.1:8420}"
 WEBHOOK_URL="${1:-http://127.0.0.1:9000/webhook}"
 SECRET_FILE="${SECRET_FILE:-./webhook-secret.txt}"
+PYTHON="${PYTHON:-python3}"
 
 if [ -z "${MEETILY_PRO_TOKEN:-}" ]; then
   echo "Set MEETILY_PRO_TOKEN. This script only reads, so the loopback token works:" >&2
@@ -31,19 +32,20 @@ fi
 
 echo "Registering webhook: recording.stopped -> $WEBHOOK_URL"
 
+REQUEST=$("$PYTHON" -c 'import json,sys; print(json.dumps({"url": sys.argv[1], "events": ["recording.stopped"], "delivery_mode": "at-least-once"}))' "$WEBHOOK_URL")
 HTTP_RESPONSE=$(curl -sS -w '\n%{http_code}' -X POST "$BASE/v1/webhooks" \
   -H "Authorization: Bearer $MEETILY_PRO_TOKEN" \
   -H "Content-Type: application/json" \
-  -d "{\"url\": \"$WEBHOOK_URL\", \"events\": [\"recording.stopped\"], \"delivery_mode\": \"at-least-once\"}")
+  -d "$REQUEST")
 
 HTTP_STATUS="${HTTP_RESPONSE##*$'\n'}"
 RESPONSE="${HTTP_RESPONSE%$'\n'*}"
 
-echo "$RESPONSE"
-
-if [ "$HTTP_STATUS" -ge 400 ]; then
-  # Real envelope: {"error":{"code","message","retryable"}}.
-  ERROR_CODE=$(printf '%s' "$RESPONSE" | python3 -c "import json,sys; print(json.load(sys.stdin).get('error', {}).get('code', 'unknown'))" 2>/dev/null || echo "unknown")
+if [ "$HTTP_STATUS" != 201 ]; then
+  # Error envelopes have no hmac_secret; never print an unexpected successful response.
+  ERROR_CODE=$(printf '%s' "$RESPONSE" | "$PYTHON" -c "import json,sys; print(json.load(sys.stdin).get('error', {}).get('code', 'unknown'))" 2>/dev/null || echo "unknown")
+  ERROR_MESSAGE=$(printf '%s' "$RESPONSE" | "$PYTHON" -c "import json,sys; print(json.load(sys.stdin).get('error', {}).get('message', ''))" 2>/dev/null || true)
+  printf 'Registration failed (HTTP %s): %s %s\n' "$HTTP_STATUS" "$ERROR_CODE" "$ERROR_MESSAGE" >&2
   case "$ERROR_CODE" in
     unauthorized)
       echo "Error: unauthorized (401) -- the token is missing, unknown, expired, or revoked. Create a key in Settings > Integrations > Apps & scripts." >&2
@@ -67,8 +69,8 @@ if [ "$HTTP_STATUS" -ge 400 ]; then
   exit 1
 fi
 
-WEBHOOK_ID=$(printf '%s' "$RESPONSE" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
-SECRET=$(printf '%s' "$RESPONSE" | python3 -c "import json,sys; print(json.load(sys.stdin)['hmac_secret'])")
+WEBHOOK_ID=$(printf '%s' "$RESPONSE" | "$PYTHON" -c "import json,sys; print(json.load(sys.stdin)['id'])")
+SECRET=$(printf '%s' "$RESPONSE" | "$PYTHON" -c "import json,sys; print(json.load(sys.stdin)['hmac_secret'])")
 
 umask 077
 printf '%s' "$SECRET" > "$SECRET_FILE"
@@ -76,7 +78,7 @@ chmod 600 "$SECRET_FILE"
 
 echo
 echo "Webhook id: $WEBHOOK_ID"
-echo "hmac_secret saved to $SECRET_FILE (mode 600). It is returned only once by the API -- keep it."
+echo "hmac_secret saved to $SECRET_FILE (chmod 600 on POSIX). It is returned only once by the API -- keep it."
 echo
 echo "Next steps:"
 echo "  1. Keep $WEBHOOK_URL's host:port under Settings > Integrations > Advanced >"

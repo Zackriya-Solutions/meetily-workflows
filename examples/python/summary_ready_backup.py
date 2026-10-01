@@ -1,17 +1,9 @@
 #!/usr/bin/env python3
-"""Save each meeting summary to a local file as soon as it's ready.
+"""Save summaries from summary.completed webhooks to ./summaries/<meeting_id>.json.
 
-Subscribes to summary.completed (the summary-ready trigger), and on each new
-event fetches the summary with the resolved token and writes it to
-./summaries/<meeting_id>.json. This only reads and saves locally -- no
-write-back to Meetily is involved, so no write-scoped token is needed: the
-loopback token works (turn on "Allow the CLI on this computer" in Settings >
-Integrations). To write back (e.g. PUT /v1/meetings/{id}/summary), create a
-key with the Write scope under Settings > Integrations > Apps & scripts >
-Create key and export MEETILY_PRO_TOKEN.
-
-Unsupported example code -- see meetily_agent/__init__.py. This is a stub:
-extend on_event() if you need something more than "save it to a file".
+The summary-ready catalog ID maps to this live event, not an installable
+workflow. The output directory is relative to where the script runs; use a
+private directory outside the repo for regular backups.
 """
 
 from __future__ import annotations
@@ -53,7 +45,7 @@ def save_summary(client: MeetilyClient, event: dict) -> None:
     if summary.get("error"):
         print(f"WARNING: {meeting_id} -- summary has error={summary['error']!r}")
 
-    OUTPUT_DIR.mkdir(exist_ok=True)
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     out_path = OUTPUT_DIR / f"{meeting_id}.json"
     out_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(f"saved summary for {meeting_id} -> {out_path}")
